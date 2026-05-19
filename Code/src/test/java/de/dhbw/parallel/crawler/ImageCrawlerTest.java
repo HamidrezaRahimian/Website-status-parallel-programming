@@ -1,5 +1,8 @@
 package de.dhbw.parallel.crawler;
 
+import de.dhbw.parallel.crawler.ImageCrawler;
+import de.dhbw.parallel.crawler.IImageCrawlerConfig;
+
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;

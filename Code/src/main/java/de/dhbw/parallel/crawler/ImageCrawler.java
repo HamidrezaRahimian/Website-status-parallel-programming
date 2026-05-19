@@ -110,12 +110,18 @@ public final class ImageCrawler implements IImageCrawler, AutoCloseable {
         }
     }
 
+    /**
+     * Runs one website scan and schedules one image task for each extracted image URI.
+     *
+     * @param websiteUri the website URI to scan
+     * @param targetDirectory the directory assigned to this website
+     */
     private void runWebsiteTask(final URI websiteUri, final Path targetDirectory) {
         moveTaskFromPendingToActive(pendingWebsiteTasks, activeWebsiteTasks);
         try {
             final List<URI> imageUris = websiteAnalyzer.analyze(websiteUri);
             for (final URI imageUri : imageUris) {
-                submitImageTask(new ImageReference(imageUri, targetDirectory));
+                submitImageTask(imageDownloader.reserveTargetPath(imageUri, targetDirectory));
             }
         } catch (final InterruptedException exception) {
             Thread.currentThread().interrupt();
@@ -126,6 +132,11 @@ public final class ImageCrawler implements IImageCrawler, AutoCloseable {
         }
     }
 
+    /**
+     * Submits one image download task to the image executor.
+     *
+     * @param imageReference the image download description
+     */
     private void submitImageTask(final ImageReference imageReference) {
         pendingImageTasks.incrementAndGet();
         try {
@@ -135,6 +146,11 @@ public final class ImageCrawler implements IImageCrawler, AutoCloseable {
         }
     }
 
+    /**
+     * Downloads one image and updates the task counters afterwards.
+     *
+     * @param imageReference the image download description
+     */
     private void runImageTask(final ImageReference imageReference) {
         moveTaskFromPendingToActive(pendingImageTasks, activeImageTasks);
         try {
@@ -148,11 +164,22 @@ public final class ImageCrawler implements IImageCrawler, AutoCloseable {
         }
     }
 
+    /**
+     * Moves a task from the pending counter to the active counter.
+     *
+     * @param pendingCounter the pending task counter
+     * @param activeCounter the active task counter
+     */
     private void moveTaskFromPendingToActive(final AtomicInteger pendingCounter, final AtomicInteger activeCounter) {
         activeCounter.incrementAndGet();
         pendingCounter.decrementAndGet();
     }
 
+    /**
+     * Validates the crawler configuration before executor services are created.
+     *
+     * @param config the crawler configuration
+     */
     private void validateConfig(final IImageCrawlerConfig config) {
         if (config.getNumberOfAllowedParallelWebsiteScans() < 1) {
             throw new IllegalArgumentException("At least one parallel website scan must be allowed.");
@@ -163,6 +190,12 @@ public final class ImageCrawler implements IImageCrawler, AutoCloseable {
         Objects.requireNonNull(config.getDownloadPath(), "download path must not be null");
     }
 
+    /**
+     * Creates a daemon thread factory with readable worker thread names.
+     *
+     * @param poolName the logical pool name
+     * @return the named thread factory
+     */
     private ThreadFactory namedThreadFactory(final String poolName) {
         final AtomicInteger threadCounter = new AtomicInteger();
         return runnable -> {

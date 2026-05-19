@@ -42,6 +42,17 @@ public final class ImageDownloader {
     }
 
     /**
+     * Creates an image reference with a target path that is already reserved for this image.
+     *
+     * @param imageUri the image URI
+     * @param targetDirectory the directory where the image should be stored
+     * @return an image reference containing the reserved target path
+     */
+    ImageReference reserveTargetPath(final URI imageUri, final Path targetDirectory) {
+        return new ImageReference(imageUri, targetDirectory, fileNameResolver.resolveTargetPath(imageUri, targetDirectory));
+    }
+
+    /**
      * Downloads an image and stores it in the reference's target directory. Failed downloads are ignored gracefully.
      *
      * @param imageReference the image download description
@@ -66,8 +77,8 @@ public final class ImageDownloader {
                 return null;
             }
 
-            Files.createDirectories(imageReference.getTargetDirectory());
-            final Path targetPath = fileNameResolver.resolveTargetPath(imageUri, imageReference.getTargetDirectory());
+            final Path targetPath = resolveTargetPath(imageReference);
+            Files.createDirectories(targetPath.getParent());
             Files.write(targetPath, response.body());
             return targetPath;
         } catch (final IOException | IllegalArgumentException ignored) {
@@ -75,6 +86,25 @@ public final class ImageDownloader {
         }
     }
 
+    /**
+     * Returns the reserved target path or resolves a new one if the reference was created externally.
+     *
+     * @param imageReference the image reference
+     * @return the target path for the file
+     */
+    private Path resolveTargetPath(final ImageReference imageReference) {
+        if (imageReference.getReservedTargetPath() != null) {
+            return imageReference.getReservedTargetPath();
+        }
+        return fileNameResolver.resolveTargetPath(imageReference.getImageUri(), imageReference.getTargetDirectory());
+    }
+
+    /**
+     * Checks whether the URI uses a supported HTTP scheme.
+     *
+     * @param uri the URI to check
+     * @return {@code true} for HTTP and HTTPS URIs
+     */
     private boolean isSupportedHttpUri(final URI uri) {
         final String scheme = uri.getScheme();
         return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);

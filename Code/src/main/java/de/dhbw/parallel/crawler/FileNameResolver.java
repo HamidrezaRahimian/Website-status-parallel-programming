@@ -49,6 +49,12 @@ public final class FileNameResolver {
         return normalizedDirectory.resolve(resolvedName);
     }
 
+    /**
+     * Extracts a file name from the URI path and falls back to a generic name when no usable name exists.
+     *
+     * @param imageUri the image URI
+     * @return a sanitized file name
+     */
     private String extractFileName(final URI imageUri) {
         final String rawPath = imageUri.getRawPath();
         if (rawPath == null || rawPath.isBlank() || rawPath.endsWith("/")) {
@@ -65,6 +71,13 @@ public final class FileNameResolver {
         return sanitizedName;
     }
 
+    /**
+     * Adds a numeric duplicate suffix before the file extension when one exists.
+     *
+     * @param fileName the original file name
+     * @param duplicateIndex the duplicate counter
+     * @return the suffixed file name
+     */
     private String addDuplicateSuffix(final String fileName, final int duplicateIndex) {
         final int extensionIndex = findExtensionIndex(fileName);
         if (extensionIndex <= 0) {
@@ -73,6 +86,12 @@ public final class FileNameResolver {
         return fileName.substring(0, extensionIndex) + "_" + duplicateIndex + fileName.substring(extensionIndex);
     }
 
+    /**
+     * Finds the extension separator in a regular file name.
+     *
+     * @param fileName the file name to inspect
+     * @return the extension dot index, or {@code -1} if no extension exists
+     */
     private int findExtensionIndex(final String fileName) {
         final int dotIndex = fileName.lastIndexOf('.');
         if (dotIndex <= 0 || dotIndex == fileName.length() - 1) {

@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -138,6 +139,51 @@ class ImageCrawlerTest {
     }
 
     @Test
+    void firstDuplicateKeepsOriginalNameInHtmlOrder() throws Exception {
+        final byte[] firstBytes = "first".getBytes(StandardCharsets.UTF_8);
+        final byte[] secondBytes = "second".getBytes(StandardCharsets.UTF_8);
+        final CountDownLatch firstImageRequested = new CountDownLatch(1);
+        final CountDownLatch releaseFirstImage = new CountDownLatch(1);
+        createPage("/ordered-duplicates", """
+                <img src="/first-slow/image.jpg">
+                <img src="/second-fast/image.jpg">
+                """);
+        createBlockingImage("/first-slow/image.jpg", firstImageRequested, releaseFirstImage, firstBytes);
+        createImage("/second-fast/image.jpg", secondBytes);
+        crawler = newCrawler(1, 2);
+
+        crawler.crawl(uri("/ordered-duplicates"));
+
+        assertTrue(firstImageRequested.await(5, TimeUnit.SECONDS));
+        waitUntilFileExists(downloadPath.resolve("1").resolve("image_2.jpg"), Duration.ofSeconds(5));
+        releaseFirstImage.countDown();
+        waitUntilIdle(crawler, Duration.ofSeconds(5));
+
+        assertArrayEquals(firstBytes, Files.readAllBytes(downloadPath.resolve("1").resolve("image.jpg")));
+        assertArrayEquals(secondBytes, Files.readAllBytes(downloadPath.resolve("1").resolve("image_2.jpg")));
+    }
+
+    @Test
+    void queryStringsMissingNamesAndMissingExtensionsUseCleanFileNames() throws IOException {
+        createPage("/filename-edge-cases", """
+                <img src="/assets/photo.jpg?version=42">
+                <img src="/files/download">
+                <img src="/folder/">
+                """);
+        createImage("/assets/photo.jpg");
+        createImage("/files/download");
+        createImage("/folder/");
+        crawler = newCrawler(1, 3);
+
+        crawler.crawl(uri("/filename-edge-cases"));
+        waitUntilIdle(crawler, Duration.ofSeconds(5));
+
+        assertTrue(Files.exists(downloadPath.resolve("1").resolve("photo.jpg")));
+        assertTrue(Files.exists(downloadPath.resolve("1").resolve("download")));
+        assertTrue(Files.exists(downloadPath.resolve("1").resolve("image")));
+    }
+
+    @Test
     void websiteScanParallelLimitIsRespected() throws Exception {
         final int allowedScans = 2;
         final ConcurrencyProbe probe = new ConcurrencyProbe(allowedScans);
@@ -177,6 +223,27 @@ class ImageCrawlerTest {
         probe.release();
         waitUntilIdle(crawler, Duration.ofSeconds(5));
         assertTrue(probe.maxConcurrent() <= allowedDownloads);
+    }
+
+    @Test
+    void websiteAnalysisAndImageDownloadsCanOverlap() throws Exception {
+        final ConcurrencyProbe imageProbe = new ConcurrencyProbe(1);
+        final ConcurrencyProbe websiteProbe = new ConcurrencyProbe(1);
+        createPage("/page-with-slow-image", "<img src=\"/slow-overlap/image.jpg\">");
+        createBlockingImagePrefix("/slow-overlap/", imageProbe);
+        createBlockingPage("/independent-page", websiteProbe);
+        crawler = newCrawler(2, 1);
+
+        crawler.crawl(uri("/page-with-slow-image"));
+        assertTrue(imageProbe.awaitExpectedEntries(Duration.ofSeconds(5)));
+
+        crawler.crawl(uri("/independent-page"));
+
+        assertTrue(websiteProbe.awaitExpectedEntries(Duration.ofSeconds(5)));
+        assertFalse(crawler.isIdle());
+        imageProbe.release();
+        websiteProbe.release();
+        waitUntilIdle(crawler, Duration.ofSeconds(5));
     }
 
     @Test
@@ -267,6 +334,27 @@ class ImageCrawlerTest {
         server.createContext(path, exchange -> send(exchange, 200, "image/png", PNG_BYTES));
     }
 
+    private void createImage(final String path, final byte[] body) {
+        server.createContext(path, exchange -> send(exchange, 200, "image/png", body));
+    }
+
+    private void createBlockingImage(
+            final String path,
+            final CountDownLatch requestLatch,
+            final CountDownLatch releaseLatch,
+            final byte[] body
+    ) {
+        server.createContext(path, exchange -> {
+            requestLatch.countDown();
+            try {
+                releaseLatch.await();
+            } catch (final InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            }
+            send(exchange, 200, "image/png", body);
+        });
+    }
+
     private void createBlockingPage(final String path, final ConcurrencyProbe probe) {
         server.createContext(path, exchange -> {
             probe.enterAndWait();
@@ -317,6 +405,22 @@ class ImageCrawlerTest {
             }
         }
         throw new AssertionError("Crawler did not become idle within " + timeout + ". Observations: " + observations);
+    }
+
+    private void waitUntilFileExists(final Path path, final Duration timeout) {
+        final long deadline = System.nanoTime() + timeout.toNanos();
+        while (System.nanoTime() < deadline) {
+            if (Files.exists(path)) {
+                return;
+            }
+            try {
+                Thread.sleep(20);
+            } catch (final InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError("Interrupted while waiting for file " + path + ".", exception);
+            }
+        }
+        throw new AssertionError("File was not created within " + timeout + ": " + path);
     }
 
     private record TestImageCrawlerConfig(

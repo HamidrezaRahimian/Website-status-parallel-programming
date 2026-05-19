@@ -99,6 +99,12 @@ public final class WebsiteAnalyzer {
         return List.copyOf(imageUris);
     }
 
+    /**
+     * Checks whether the URI uses a supported HTTP scheme.
+     *
+     * @param uri the URI to check
+     * @return {@code true} for HTTP and HTTPS URIs
+     */
     private boolean isSupportedHttpUri(final URI uri) {
         final String scheme = uri.getScheme();
         return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);

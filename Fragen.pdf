@@ -1,0 +1,136 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+2 0 obj
+<< /Length 4411 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 50 790 Tm (FRAGEN) Tj
+1 0 0 1 50 776 Tm () Tj
+1 0 0 1 50 762 Tm (1. Welche Teile des Programms müssen gegenüber parallelem Zugriff geschützt werden?) Tj
+1 0 0 1 50 748 Tm () Tj
+1 0 0 1 50 734 Tm (Zuerst muss die Nummerierung der Zielordner geschützt werden. Jeder Aufruf von) Tj
+1 0 0 1 50 720 Tm (`crawl\(uri\)` erhält einen eigenen Unterordner mit einer fortlaufenden Nummer. Da mehrere) Tj
+1 0 0 1 50 706 Tm (Threads diese Methode gleichzeitig aufrufen können, darf die Nummerierung nicht doppelt) Tj
+1 0 0 1 50 692 Tm (vergeben werden.) Tj
+1 0 0 1 50 678 Tm () Tj
+1 0 0 1 50 664 Tm (Ebenfalls kritisch ist die Zustandsverfolgung des Crawlers. Der Crawler muss jederzeit) Tj
+1 0 0 1 50 650 Tm (wissen, wie viele Webseiten-Scans warten oder laufen und wie viele Bilddownloads warten) Tj
+1 0 0 1 50 636 Tm (oder laufen. Diese Werte werden von unterschiedlichen Threads verändert: vom aufrufenden) Tj
+1 0 0 1 50 622 Tm (Thread beim Einreichen neuer Arbeit und von den Worker-Threads beim Starten und Beenden) Tj
+1 0 0 1 50 608 Tm (ihrer Aufgaben.) Tj
+1 0 0 1 50 594 Tm () Tj
+1 0 0 1 50 580 Tm (Auch `isIdle\(\)` greift auf gemeinsam genutzte Daten zu. Die Methode darf nur dann `true`) Tj
+1 0 0 1 50 566 Tm (zurückgeben, wenn weder Webseitenanalysen noch Bilddownloads offen sind. Deshalb müssen) Tj
+1 0 0 1 50 552 Tm (die zugrunde liegenden Zähler sicher aktualisiert und gelesen werden können.) Tj
+1 0 0 1 50 538 Tm () Tj
+1 0 0 1 50 524 Tm (Ein weiterer gemeinsamer Bereich ist die Vergabe der Dateinamen. Wenn mehrere Bilder im) Tj
+1 0 0 1 50 510 Tm (selben Zielordner denselben Namen haben, muss eindeutig entschieden werden, welche Datei) Tj
+1 0 0 1 50 496 Tm (den Originalnamen behält und welche Datei einen Suffix wie `_2` bekommt. Diese) Tj
+1 0 0 1 50 482 Tm (Entscheidung darf bei parallelen Downloads nicht zufällig oder mehrfach getroffen) Tj
+1 0 0 1 50 468 Tm (werden.) Tj
+1 0 0 1 50 454 Tm () Tj
+1 0 0 1 50 440 Tm (Die Warteschlangen der Aufgaben müssen ebenfalls thread-safe sein. Diese Struktur wird) Tj
+1 0 0 1 50 426 Tm (jedoch nicht selbst implementiert, sondern durch `ExecutorService` bereitgestellt. Die) Tj
+1 0 0 1 50 412 Tm (Java-Bibliothek übernimmt hier das sichere Einreihen und Abarbeiten wartender Aufgaben.) Tj
+1 0 0 1 50 398 Tm () Tj
+1 0 0 1 50 384 Tm (2. Wie stellen Sie den Schutz gegenüber dem parallelen Zugriff an den genannten Stellen) Tj
+1 0 0 1 50 370 Tm (sicher? Welche Alternativen hätte es gegeben? Warum haben Sie sich für diese Variante) Tj
+1 0 0 1 50 356 Tm (des Schutzes entschieden?) Tj
+1 0 0 1 50 342 Tm () Tj
+1 0 0 1 50 328 Tm (Für die Ordnernummern und die Aufgabenzähler verwendet das Programm `AtomicInteger`. Das) Tj
+1 0 0 1 50 314 Tm (ist an diesen Stellen passend, weil hauptsächlich einfache Operationen wie Erhöhen,) Tj
+1 0 0 1 50 300 Tm (Verringern und Lesen benötigt werden. Ein großer gemeinsamer Lock wäre hier unnötig) Tj
+1 0 0 1 50 286 Tm (schwerfällig und würde die parallele Verarbeitung stärker einschränken.) Tj
+1 0 0 1 50 272 Tm () Tj
+1 0 0 1 50 258 Tm (Die Begrenzung der Parallelität erfolgt über zwei feste `ExecutorService`-Threadpools.) Tj
+1 0 0 1 50 244 Tm (Ein Pool verarbeitet ausschließlich Webseiten-Scans, der andere Pool ausschließlich) Tj
+1 0 0 1 50 230 Tm (Bilddownloads. Die jeweilige maximale Threadanzahl kommt direkt aus der Konfiguration.) Tj
+1 0 0 1 50 216 Tm (Wenn alle Worker eines Pools beschäftigt sind, bleiben weitere Aufgaben in der internen) Tj
+1 0 0 1 50 202 Tm (Warteschlange des Executors, bis wieder ein Platz frei wird.) Tj
+1 0 0 1 50 188 Tm () Tj
+1 0 0 1 50 174 Tm (Die Dateinamenvergabe ist im `FileNameResolver` mit einer `synchronized`-Methode) Tj
+1 0 0 1 50 160 Tm (geschützt. Der kritische Bereich ist bewusst klein gehalten. Innerhalb dieses Bereichs) Tj
+1 0 0 1 50 146 Tm (wird nur der nächste freie Name berechnet und reserviert. HTTP-Downloads und) Tj
+1 0 0 1 50 132 Tm (Dateischreiboperationen laufen außerhalb dieser Synchronisierung. Dadurch blockieren) Tj
+1 0 0 1 50 118 Tm (sich parallele Downloads nicht unnötig gegenseitig.) Tj
+1 0 0 1 50 104 Tm () Tj
+1 0 0 1 50 90 Tm (Eine Alternative wäre gewesen, größere Teile von `ImageCrawler` vollständig zu) Tj
+1 0 0 1 50 76 Tm (synchronisieren. Das wäre zwar einfach umzusetzen, würde aber zu viel unabhängige Arbeit) Tj
+1 0 0 1 50 62 Tm (blockieren. Auch ein `ReentrantLock` wäre möglich gewesen. Für diese Implementierung) Tj
+ET
+endstream
+endobj
+3 0 obj
+<< /Length 2867 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 50 790 Tm (bringt er jedoch keinen echten Vorteil gegenüber `AtomicInteger` und einem kleinen) Tj
+1 0 0 1 50 776 Tm (`synchronized`-Block.) Tj
+1 0 0 1 50 762 Tm () Tj
+1 0 0 1 50 748 Tm (Man könnte die Parallelität außerdem mit `Semaphore` oder eigenen Worker-Queues) Tj
+1 0 0 1 50 734 Tm (begrenzen. Für diese Aufgabe ist `ExecutorService` aber die direktere Lösung, weil Java) Tj
+1 0 0 1 50 720 Tm (damit das Einreihen, Warten und Abarbeiten von Aufgaben bereits zuverlässig) Tj
+1 0 0 1 50 706 Tm (bereitstellt. Die Implementierung bleibt dadurch übersichtlich und konzentriert sich auf) Tj
+1 0 0 1 50 692 Tm (die eigentliche Crawler-Logik.) Tj
+1 0 0 1 50 678 Tm () Tj
+1 0 0 1 50 664 Tm (3. Nennen Sie die Objekte und Datenstrukturen, die pro Thread zusätzlich im) Tj
+1 0 0 1 50 650 Tm (Arbeitsspeicher Heap oder Stack vorgehalten werden müssen. JVM-interne Details zum) Tj
+1 0 0 1 50 636 Tm (erforderlichen Speicher für einen Thread müssen nicht behandelt werden.) Tj
+1 0 0 1 50 622 Tm () Tj
+1 0 0 1 50 608 Tm (Pro Worker-Thread entstehen Stack Frames für die Methoden, die gerade ausgeführt werden.) Tj
+1 0 0 1 50 594 Tm (Bei einem Webseiten-Scan sind das zum Beispiel Aufrufe in `runWebsiteTask` und) Tj
+1 0 0 1 50 580 Tm (`WebsiteAnalyzer.analyze`. Dazu kommen lokale Variablen wie die Webseiten-URI, der) Tj
+1 0 0 1 50 566 Tm (Zielordner, der HTTP-Request und die HTTP-Response.) Tj
+1 0 0 1 50 552 Tm () Tj
+1 0 0 1 50 538 Tm (Bei der Webseitenanalyse wird der HTML-Text im Speicher gehalten. Jsoup erzeugt daraus) Tj
+1 0 0 1 50 524 Tm (ein `Document`, aus dem die `<img>`-Elemente gelesen werden. Die extrahierten) Tj
+1 0 0 1 50 510 Tm (Bildadressen liegen anschließend als Liste von `URI`-Objekten vor, bis daraus Download-) Tj
+1 0 0 1 50 496 Tm (Aufgaben erzeugt wurden.) Tj
+1 0 0 1 50 482 Tm () Tj
+1 0 0 1 50 468 Tm (Bei einem Bilddownload hält der Thread ebenfalls lokale HTTP-Objekte, also einen) Tj
+1 0 0 1 50 454 Tm (`HttpRequest` und eine `HttpResponse<byte[]>`. Die heruntergeladenen Bilddaten liegen) Tj
+1 0 0 1 50 440 Tm (als Byte-Array im Speicher, bevor sie in eine Datei geschrieben werden. Dazu kommen) Tj
+1 0 0 1 50 426 Tm (lokale Variablen für den Zielpfad und den Dateinamen.) Tj
+1 0 0 1 50 412 Tm () Tj
+1 0 0 1 50 398 Tm (Im Heap liegen zusätzlich die Aufgabenobjekte, die in den Executor-Queues warten oder) Tj
+1 0 0 1 50 384 Tm (gerade ausgeführt werden. Dazu gehören die `Runnable`-Instanzen und die) Tj
+1 0 0 1 50 370 Tm (`ImageReference`-Objekte, die jeweils eine Bild-URI und den passenden Zielordner) Tj
+1 0 0 1 50 356 Tm (beschreiben.) Tj
+1 0 0 1 50 342 Tm () Tj
+1 0 0 1 50 328 Tm (Wenn Fehler auftreten, können kurzzeitig Exception-Objekte entstehen. Diese werden) Tj
+1 0 0 1 50 314 Tm (abgefangen, damit ein einzelner defekter Link oder Download nicht den gesamten Crawler) Tj
+1 0 0 1 50 300 Tm (beendet.) Tj
+ET
+endstream
+endobj
+4 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R >> >> /Contents 2 0 R >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R >> >> /Contents 3 0 R >>
+endobj
+6 0 obj
+<< /Type /Pages /Kids [4 0 R 5 0 R] /Count 2 >>
+endobj
+7 0 obj
+<< /Type /Catalog /Pages 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000106 00000 n 
+0000004569 00000 n 
+0000007488 00000 n 
+0000007614 00000 n 
+0000007740 00000 n 
+0000007803 00000 n 
+trailer
+<< /Size 8 /Root 7 0 R >>
+startxref
+7852
+%%EOF

@@ -1,0 +1,189 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+2 0 obj
+<< /Length 4249 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 50 790 Tm (ENTWURF: PARALLELER IMAGE CRAWLER) Tj
+1 0 0 1 50 776 Tm () Tj
+1 0 0 1 50 762 Tm (Ziel des Programms) Tj
+1 0 0 1 50 748 Tm () Tj
+1 0 0 1 50 734 Tm (Das Programm implementiert einen einfachen Image Crawler. Er lädt eine übergebene) Tj
+1 0 0 1 50 720 Tm (Webseite, durchsucht deren HTML-Quelltext nach Bildern und speichert die gefundenen) Tj
+1 0 0 1 50 706 Tm (Bilddateien lokal ab. Der Schwerpunkt liegt dabei nicht auf einem möglichst) Tj
+1 0 0 1 50 692 Tm (vollständigen Webbrowser, sondern auf einer klar abgegrenzten, parallelisierten) Tj
+1 0 0 1 50 678 Tm (Verarbeitung: HTML laden, Bildadressen erkennen und Bilder herunterladen.) Tj
+1 0 0 1 50 664 Tm () Tj
+1 0 0 1 50 650 Tm (Der Crawler beschränkt sich bewusst auf normale HTML-Seiten mit `<img>`-Tags. Dynamisch) Tj
+1 0 0 1 50 636 Tm (per JavaScript nachgeladene Inhalte werden nicht berücksichtigt. Ebenso folgt der) Tj
+1 0 0 1 50 622 Tm (Crawler keinen Links auf weitere HTML-Seiten. Dadurch bleibt der fachliche Umfang) Tj
+1 0 0 1 50 608 Tm (überschaubar und der Fokus liegt auf der geforderten Parallelisierung.) Tj
+1 0 0 1 50 594 Tm () Tj
+1 0 0 1 50 580 Tm (Für jeden Aufruf von `crawl\(uri\)` wird unter dem konfigurierten Download-Pfad ein) Tj
+1 0 0 1 50 566 Tm (eigener Unterordner angelegt. Diese Ordner werden fortlaufend nummeriert, beginnend bei) Tj
+1 0 0 1 50 552 Tm (`1`. So lässt sich später eindeutig erkennen, welche Dateien zu welchem Crawl-Aufruf) Tj
+1 0 0 1 50 538 Tm (gehören. Die Nummerierung ist auch dann korrekt, wenn mehrere Threads gleichzeitig neue) Tj
+1 0 0 1 50 524 Tm (Webseiten an den Crawler übergeben.) Tj
+1 0 0 1 50 510 Tm () Tj
+1 0 0 1 50 496 Tm (Aufbau und Verantwortlichkeiten) Tj
+1 0 0 1 50 482 Tm () Tj
+1 0 0 1 50 468 Tm (Die zentrale Klasse des Programms ist `ImageCrawler`. Sie nimmt neue Crawl-Aufträge) Tj
+1 0 0 1 50 454 Tm (entgegen, vergibt die Zielordner und koordiniert die Arbeit zwischen Webseitenanalyse) Tj
+1 0 0 1 50 440 Tm (und Bilddownload. Die eigentlichen fachlichen Schritte sind bewusst in eigene Klassen) Tj
+1 0 0 1 50 426 Tm (ausgelagert.) Tj
+1 0 0 1 50 412 Tm () Tj
+1 0 0 1 50 398 Tm (`WebsiteAnalyzer` ist für die Analyse der Webseiten zuständig. Die Klasse lädt die HTML-) Tj
+1 0 0 1 50 384 Tm (Seite mit dem Java-`HttpClient`, parst den Inhalt mit Jsoup und extrahiert die) Tj
+1 0 0 1 50 370 Tm (Bildadressen aus den gefundenen `<img src="...">`-Elementen. Relative Bildpfade werden) Tj
+1 0 0 1 50 356 Tm (dabei gegen die ursprüngliche Webseitenadresse aufgelöst. Ungültige oder nicht) Tj
+1 0 0 1 50 342 Tm (unterstützte Adressen, zum Beispiel `data:`- oder `ftp:`-Links, werden übersprungen.) Tj
+1 0 0 1 50 328 Tm () Tj
+1 0 0 1 50 314 Tm (`ImageDownloader` übernimmt anschließend den Download der Bilddateien. Er lädt die Daten) Tj
+1 0 0 1 50 300 Tm (über HTTP oder HTTPS und speichert sie im passenden Zielordner. Die Dateinamen werden) Tj
+1 0 0 1 50 286 Tm (durch `FileNameResolver` vorbereitet. Diese Trennung hält die Download-Klasse) Tj
+1 0 0 1 50 272 Tm (übersichtlich und kapselt die Sonderlogik für doppelte Dateinamen an einer Stelle.) Tj
+1 0 0 1 50 258 Tm () Tj
+1 0 0 1 50 244 Tm (Wenn mehrere Bilder im selben Zielordner denselben Namen tragen, bleibt die erste Datei) Tj
+1 0 0 1 50 230 Tm (unverändert. Weitere Dateien erhalten einen Suffix vor der Dateiendung, zum Beispiel) Tj
+1 0 0 1 50 216 Tm (`image_2.jpg` oder `image_3.jpg`. Die Reservierung des Zielpfads passiert bereits vor) Tj
+1 0 0 1 50 202 Tm (dem Start der Download-Aufgabe. Dadurch hängt die Benennung nicht davon ab, welcher) Tj
+1 0 0 1 50 188 Tm (Bildserver zufällig schneller antwortet.) Tj
+1 0 0 1 50 174 Tm () Tj
+1 0 0 1 50 160 Tm (`ImageReference` dient als kleine Datenklasse für einzelne Download-Aufgaben. Sie) Tj
+1 0 0 1 50 146 Tm (enthält die Bild-URI, den Zielordner und bei Bedarf den bereits reservierten Zielpfad.) Tj
+1 0 0 1 50 132 Tm () Tj
+1 0 0 1 50 118 Tm (Datenfluss) Tj
+1 0 0 1 50 104 Tm () Tj
+1 0 0 1 50 90 Tm (Der Ablauf beginnt mit einem Aufruf von `crawl\(uri\)`. `ImageCrawler` bestimmt zuerst den) Tj
+1 0 0 1 50 76 Tm (nummerierten Zielordner und legt anschließend eine Aufgabe für die Webseitenanalyse an.) Tj
+1 0 0 1 50 62 Tm (Diese Aufgabe wird an den Website-Executor übergeben.) Tj
+ET
+endstream
+endobj
+3 0 obj
+<< /Length 3746 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 50 790 Tm () Tj
+1 0 0 1 50 776 Tm (Sobald ein Website-Worker frei ist, ruft er `WebsiteAnalyzer.analyze\(uri\)` auf. Das) Tj
+1 0 0 1 50 762 Tm (Ergebnis ist eine Liste von Bild-URIs. Für jede gefundene Bildadresse reserviert der) Tj
+1 0 0 1 50 748 Tm (Crawler einen eindeutigen Zielpfad und erstellt eine `ImageReference`. Diese Referenzen) Tj
+1 0 0 1 50 734 Tm (werden danach als eigene Aufgaben an den Download-Executor weitergereicht.) Tj
+1 0 0 1 50 720 Tm () Tj
+1 0 0 1 50 706 Tm (Der Datenfluss lässt sich in fünf Schritte aufteilen:) Tj
+1 0 0 1 50 692 Tm () Tj
+1 0 0 1 50 678 Tm (1. Webseite entgegennehmen und Zielordner festlegen) Tj
+1 0 0 1 50 664 Tm (2. HTML-Seite laden und `<img>`-Tags auswerten) Tj
+1 0 0 1 50 650 Tm (3. Bildadressen in Download-Aufgaben umwandeln) Tj
+1 0 0 1 50 636 Tm (4. eindeutige Zielpfade reservieren) Tj
+1 0 0 1 50 622 Tm (5. Bilder parallel herunterladen und speichern) Tj
+1 0 0 1 50 608 Tm () Tj
+1 0 0 1 50 594 Tm (Vereinfacht entsteht damit folgende Pipeline:) Tj
+1 0 0 1 50 580 Tm () Tj
+1 0 0 1 50 566 Tm (```text) Tj
+1 0 0 1 50 552 Tm (crawl\(uri\)) Tj
+1 0 0 1 50 538 Tm (   -> ImageCrawler vergibt Zielordner) Tj
+1 0 0 1 50 524 Tm (   -> WebsiteAnalyzer lädt und analysiert HTML) Tj
+1 0 0 1 50 510 Tm (   -> ImageCrawler erzeugt ImageReference-Aufgaben) Tj
+1 0 0 1 50 496 Tm (   -> ImageDownloader lädt und speichert Bilder) Tj
+1 0 0 1 50 482 Tm (```) Tj
+1 0 0 1 50 468 Tm () Tj
+1 0 0 1 50 454 Tm (Parallelisierung) Tj
+1 0 0 1 50 440 Tm () Tj
+1 0 0 1 50 426 Tm (Die Webseitenanalyse und die Bilddownloads werden unabhängig voneinander parallelisiert.) Tj
+1 0 0 1 50 412 Tm (Dafür besitzt `ImageCrawler` zwei feste Threadpools. Der erste Threadpool verarbeitet) Tj
+1 0 0 1 50 398 Tm (nur Webseiten-Scans. Seine Größe wird über `getNumberOfAllowedParallelWebsiteScans\(\)`) Tj
+1 0 0 1 50 384 Tm (konfiguriert. Der zweite Threadpool verarbeitet nur Bilddownloads. Seine Größe wird über) Tj
+1 0 0 1 50 370 Tm (`getNumberOfAllowedParallelImageDownloads\(\)` festgelegt.) Tj
+1 0 0 1 50 356 Tm () Tj
+1 0 0 1 50 342 Tm (Diese Trennung ist wichtig, weil beide Arbeitsschritte unterschiedliche Wartezeiten) Tj
+1 0 0 1 50 328 Tm (haben können. Ein langsamer Bilddownload soll nicht verhindern, dass weitere Webseiten) Tj
+1 0 0 1 50 314 Tm (analysiert werden. Gleichzeitig sollen viele gefundene Bilder nicht dazu führen, dass) Tj
+1 0 0 1 50 300 Tm (unbegrenzt viele Downloads parallel starten. Die internen Warteschlangen der Executor-) Tj
+1 0 0 1 50 286 Tm (Services übernehmen das geordnete Zurückstellen von Aufgaben, wenn alle erlaubten Worker) Tj
+1 0 0 1 50 272 Tm (gerade beschäftigt sind.) Tj
+1 0 0 1 50 258 Tm () Tj
+1 0 0 1 50 244 Tm (Als algorithmisches Muster wird Task Parallelism verwendet: Jede Webseitenanalyse und) Tj
+1 0 0 1 50 230 Tm (jeder Bilddownload ist eine eigene Aufgabe. Zusätzlich entsteht eine einfache Pipeline,) Tj
+1 0 0 1 50 216 Tm (weil die Webseitenanalyse Bildadressen produziert, die anschließend von der Download-) Tj
+1 0 0 1 50 202 Tm (Stufe verarbeitet werden. Aus Sicht der Implementierung entspricht die Struktur einem) Tj
+1 0 0 1 50 188 Tm (Master/Worker-Ansatz: `ImageCrawler` nimmt Arbeit an, hält den Zustand nach und verteilt) Tj
+1 0 0 1 50 174 Tm (Aufgaben an Worker-Threads.) Tj
+1 0 0 1 50 160 Tm () Tj
+1 0 0 1 50 146 Tm (Thread-Safety) Tj
+1 0 0 1 50 132 Tm () Tj
+1 0 0 1 50 118 Tm (Mehrere Teile des Programms werden von verschiedenen Threads verwendet und müssen) Tj
+1 0 0 1 50 104 Tm (deshalb geschützt werden. Die Nummerierung der Zielordner erfolgt über einen) Tj
+1 0 0 1 50 90 Tm (`AtomicInteger`. Dadurch kann auch bei gleichzeitigen `crawl`-Aufrufen keine Nummer) Tj
+1 0 0 1 50 76 Tm (doppelt vergeben werden.) Tj
+1 0 0 1 50 62 Tm () Tj
+ET
+endstream
+endobj
+4 0 obj
+<< /Length 1925 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 50 790 Tm (Auch der Arbeitszustand des Crawlers wird über atomare Zähler verfolgt. Es gibt jeweils) Tj
+1 0 0 1 50 776 Tm (Zähler für wartende und laufende Webseiten-Aufgaben sowie für wartende und laufende) Tj
+1 0 0 1 50 762 Tm (Bild-Aufgaben. `isIdle\(\)` liest diese Werte aus und gibt nur dann `true` zurück, wenn in) Tj
+1 0 0 1 50 748 Tm (beiden Stufen keine Arbeit mehr offen ist.) Tj
+1 0 0 1 50 734 Tm () Tj
+1 0 0 1 50 720 Tm (Bei der Dateinamenvergabe wird ein kleiner synchronisierter Bereich verwendet.) Tj
+1 0 0 1 50 706 Tm (`FileNameResolver.resolveTargetPath\(...\)` muss pro Zielordner wissen, welche Namen) Tj
+1 0 0 1 50 692 Tm (bereits reserviert wurden. Nur diese Reservierung ist synchronisiert. Der eigentliche) Tj
+1 0 0 1 50 678 Tm (HTTP-Download und das Schreiben der Datei liegen außerhalb des Locks. Damit bleibt der) Tj
+1 0 0 1 50 664 Tm (Schutz auf den wirklich gemeinsamen Zustand beschränkt.) Tj
+1 0 0 1 50 650 Tm () Tj
+1 0 0 1 50 636 Tm (Fehlerbehandlung) Tj
+1 0 0 1 50 622 Tm () Tj
+1 0 0 1 50 608 Tm (Fehler einzelner Webseiten oder Bilder beenden den Crawler nicht. Wenn eine Webseite) Tj
+1 0 0 1 50 594 Tm (einen HTTP-Fehlerstatus liefert, entsteht einfach keine Bildliste. Schlägt ein) Tj
+1 0 0 1 50 580 Tm (Webseiten-Request fehl, wird nur diese eine Webseiten-Aufgabe beendet. Wenn ein Bild) Tj
+1 0 0 1 50 566 Tm (nicht geladen werden kann, wird nur dieser einzelne Download ignoriert.) Tj
+1 0 0 1 50 552 Tm () Tj
+1 0 0 1 50 538 Tm (Diese Fehlerbehandlung passt zum Ziel der Aufgabe. Der Schwerpunkt liegt auf der) Tj
+1 0 0 1 50 524 Tm (Parallelisierung und nicht auf einer vollständigen Behandlung aller möglichen) Tj
+1 0 0 1 50 510 Tm (Besonderheiten im Web. Ungültige Bildlinks, fehlende Dateiendungen oder ungewohnte) Tj
+1 0 0 1 50 496 Tm (Dateinamen werden daher einfach und robust behandelt, ohne die übrige Verarbeitung zu) Tj
+1 0 0 1 50 482 Tm (blockieren.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R >> >> /Contents 2 0 R >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R >> >> /Contents 3 0 R >>
+endobj
+7 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R >> >> /Contents 4 0 R >>
+endobj
+8 0 obj
+<< /Type /Pages /Kids [5 0 R 6 0 R 7 0 R] /Count 3 >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000106 00000 n 
+0000004407 00000 n 
+0000008205 00000 n 
+0000010182 00000 n 
+0000010308 00000 n 
+0000010434 00000 n 
+0000010560 00000 n 
+0000010629 00000 n 
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+10678
+%%EOF

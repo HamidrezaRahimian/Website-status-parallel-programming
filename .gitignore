@@ -1,4 +1,7 @@
 target/
+.tools/
+Code/.tmp-pdf/
+Code/tools/
 *.class
 *.jar
 *.war
